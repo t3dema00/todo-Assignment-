@@ -1,53 +1,49 @@
-import { hash, compare } from "bcrypt";
-import { insertUser, searchUserByEmail } from "../models/User.js";
-import { ApiError } from "../helpers/apiError.js";
-import jwt from "jsonwebtoken";
-const { sign } = jwt;
+import bcrypt from 'bcrypt';
+//const bcrypt = require('bcrypt');
+import { hash, compare } from 'bcrypt';
+import jwt from 'jsonwebtoken';
+const { sign} = jwt;
+import { insertUser, selectUserByEmail } from '../models/User.js';  
+import { ApiError } from '../helper/ApiError.js';
 
-const registration = async (req, res, next) => {
+const postRegistration = async (req, res, next) => {
+    try {
+        if (!req.body.email || req.body.email.length === 0) return next(new ApiError('Invalid email for user', 400));
+        if (!req.body.password || req.body.password.length < 8) return next(new ApiError('Invalid password for user', 400));
+        const hashedPassword = await hash(req.body.password, 10);
+        const userFromDb = await insertUser(req.body.email, hashedPassword);
+        const user = userFromDb.rows[0];
+        return res.status(201).json(createUserObject(user.id,user.email));
+    } catch (error) {
+        return next(error);
+    }
+}
 
-  const { email, password } = req.body;
-    if (!email || email.length === 0)
-      return next(new ApiError("Invalid email", 400));
-    if (!password || password.length < 8)
-      return next(new ApiError("Invalid password", 400));
+const createUserObject = (id, email, token=undefined) => {
+    return {
+        'id': id,
+        'email': email, 
+        ...(token!==undefined) && {'token': token}
+    }
+}
 
-  try {
-    const hashedPassword = await hash(password, 10);
-    const result = await insertUser(email, hashedPassword);
-    const user = result.rows[0];
-    res.status(201).json(createUserObj(user.id, user.email));
-  } catch (error) {
-    return next(error);
-  }
-};
 
-const login = async (req, res, next) => {
-  try {
-    const { email, password } = req.body;
-    const result = await searchUserByEmail(email);
 
-    if (result.rowCount === 0)
-      return next(new ApiError("Invalid credentials", 400));
+const postLogin = async (req, res, next) => {
+    const invalid_credentials_message = 'Invalid credentials';
+    try {
+        const userFromDb = await selectUserByEmail(req.body.email);
+        if (userFromDb.rowCount === 0) return next(new ApiError(invalid_credentials_message));
 
-    const user = result.rows[0];
-    const isPasswordValid = await compare(password, user.password);
-    if (!isPasswordValid) return next(new ApiError("Invalid password", 401));
+        const user = userFromDb.rows[0];
+        if(!await compare(req.body.password, user.password)) return next(new ApiError(invalid_credentials_message, 401));
 
-    const token = sign({ user: email }, process.env.JWT_SECRET);
+        const token = sign(req.body.email, process.env.JWT_SECRET_KEY);
+        return res.status(200).json(createUserObject(user.id, user.email, token));
 
-    return res.status(200).json(createUserObj(user.id, user.email, token));
-  } catch (error) {
-    return next(error);
-  }
-};
+    } catch (error) {
+        return next(error);
+    }
 
-const createUserObj = (id, email, token = undefined) => {
-  return {
-    'id': id,
-    'email': email,
-    ...(token !== undefined && { 'token': token }),
-  };
-};
-
-export { registration, login };
+}
+export {postRegistration, postLogin};

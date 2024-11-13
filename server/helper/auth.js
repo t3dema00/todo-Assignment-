@@ -1,13 +1,11 @@
+// for adding and deleting only for logged users here
 
 const authorizationRequired = "Authorization required";
 const invalidCredentials = "Invalid credentials";
 
 const auth = (req,res, next) => {
-
     if(!req.headers.authorization) {
-
         res.statusMessage = authorizationRequired;
-        
         res.status(401).json({message: authorizationRequired});
     } else {
         try {
@@ -23,3 +21,4 @@ const auth = (req,res, next) => {
 }
 
 export {auth};
+

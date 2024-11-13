@@ -5,10 +5,13 @@ import { getTasks, postTask } from '../controllers/TaskController.js';
 
 const router = Router();
 
+// Get all tasks
 router.get('/', getTasks);
 
+// Post a new task
 router.post('/create', postTask);
 
+// Delete a task by ID
 router.delete('/delete/:id', (req, res) => {
     
     const id = parseInt(req.params.id);

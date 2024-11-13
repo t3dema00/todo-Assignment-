@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
-import Home from './screens/Home';
+import Home from './screens/Home.js';
 import Authentication, { AuthenticationMode } from './screens/Authentication.js';
 import ErrorPage from './screens/ErrorPage.js';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';

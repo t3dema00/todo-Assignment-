@@ -1,7 +1,7 @@
 import './Home.css';
 import React from 'react';
 import {useEffect, useState } from 'react';
-import Row from '../components/Row';
+import Row from '../components/Row.js';
 import axios from 'axios';
 import {useUser} from '../context/useUser.js';
 
